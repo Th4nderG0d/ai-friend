@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
-import { PRESETS } from "./constants";
+import { PRESETS, starters } from "./constants";
 
 export default function Home() {
 	const [sysPrompt, setSysPrompt] = useState(PRESETS[0].prompt);
@@ -100,16 +100,30 @@ export default function Home() {
 			{/* Messages */}
 			<div className="flex-1 overflow-y-auto px-4 py-6">
 				<div className="max-w-3xl mx-auto space-y-6">
-					{messages.length === 0 && (
-						<div className="text-center py-20">
-							<p className="text-4xl mb-4">👋</p>
-							<h2 className="text-xl font-bold mb-2">Welcome!</h2>
-							<p className="text-gray-500 text-sm mb-4">
-								Ask me anything. Change my personality in ⚙️
-								settings.
-							</p>
-						</div>
-					)}
+					{starters.map((s, i) => (
+						<button
+							key={i}
+							onClick={() => {
+								// Set input value programmatically
+								const el = document.querySelector("input");
+								if (el) {
+									const setter =
+										Object.getOwnPropertyDescriptor(
+											HTMLInputElement.prototype,
+											"value"
+										)?.set;
+									setter?.call(el, s.text);
+									el.dispatchEvent(
+										new Event("input", { bubbles: true })
+									);
+								}
+							}}
+							className="flex items-center gap-2 px-4 py-3 bg-gray-800
+      hover:bg-gray-700 rounded-xl text-sm text-left transition">
+							<span>{s.icon}</span>
+							<span className="text-gray-300">{s.text}</span>
+						</button>
+					))}
 					{messages.map((message) => (
 						<div key={message.id}>
 							<div>
@@ -119,7 +133,19 @@ export default function Home() {
 								{message.parts.map((part, index) => {
 									if (part.type === "text") {
 										return (
-											<span key={index}>{part.text}</span>
+											<>
+												<span key={index}>
+													{part.text}
+												</span>
+												<button
+													onClick={() =>
+														navigator.clipboard.writeText(
+															part.text
+														)
+													}>
+													📋 Copy
+												</button>
+											</>
 										);
 									}
 									return null;
@@ -146,7 +172,7 @@ export default function Home() {
 							value={input}
 							onChange={(e) => setInput(e.target.value)}
 							placeholder="Type your message..."
-							className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition"
+							className="flex-1 min-h-11 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition"
 							autoFocus
 						/>
 						<button
