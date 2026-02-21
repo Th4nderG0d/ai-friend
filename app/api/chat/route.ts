@@ -2,13 +2,28 @@ import { openai } from "@ai-sdk/openai";
 import { convertToModelMessages, streamText } from "ai";
 
 export async function POST(req: Request) {
-	const { messages } = await req.json();
+	try {
+		const { messages, system, model } = await req.json();
 
-	const result = streamText({
-		model: openai("gpt-4o-mini"),
-		system: "You are a helpful AI assistant. Be concise and clear.",
-		messages: await convertToModelMessages(messages),
-	});
+		if (!messages?.length) {
+			return new Response("Messages required", { status: 400 });
+		}
 
-	return result.toTextStreamResponse();
+		// Keep last 20 messages to avoid token limits
+		const recent = messages.slice(-20);
+
+		const result = streamText({
+			model: openai(model || "gpt-4o-mini"),
+			system:
+				system ||
+				"You are a helpful AI assistant. Be concise and clear.",
+			messages: await convertToModelMessages(recent),
+			maxOutputTokens: 2048,
+		});
+
+		return result.toTextStreamResponse();
+	} catch (err) {
+		console.error("API error:", err);
+		return new Response("Something went wrong", { status: 500 });
+	}
 }

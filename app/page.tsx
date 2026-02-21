@@ -3,12 +3,18 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
+import { PRESETS } from "./constants";
 
 export default function Home() {
+	const [sysPrompt, setSysPrompt] = useState(PRESETS[0].prompt);
+	const [showSettings, setShowSettings] = useState(false);
+	const [model, setModel] = useState("gemini-2.0-flash");
 	const [input, setInput] = useState("");
-	const { messages, sendMessage } = useChat({
+
+	const { messages, sendMessage, error, setMessages } = useChat({
 		transport: new DefaultChatTransport({
 			api: "/api/chat",
+			body: { system: sysPrompt, model },
 		}),
 	});
 
@@ -35,10 +41,61 @@ export default function Home() {
 				<div>
 					<h1 className="font-bold">AI Chat Assistant</h1>
 					<p className="text-xs text-gray-500">
-						Gemini 2.0 Flash • Free
+						{messages.length} messages
 					</p>
 				</div>
+				<div className="flex gap-2 items-center">
+					<select
+						value={model}
+						onChange={(e) => setModel(e.target.value)}
+						className="bg-gray-800 text-xs rounded-lg px-2 py-1.5 border border-gray-700 outline-none">
+						<option value="gpt-4o-mini">⚡ Gpt-4o-mini</option>
+						<option value="gpt-5">🧠 Gpt 5</option>
+					</select>
+					<button
+						onClick={() => setShowSettings(!showSettings)}
+						className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-lg text-xs transition">
+						⚙️
+					</button>
+					<button
+						onClick={() => setMessages([])}
+						className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-semibold transition">
+						+ New Chat
+					</button>
+				</div>
 			</header>
+
+			{showSettings && (
+				<div className="border-b border-gray-800 px-4 py-3 bg-gray-900/50">
+					<p className="text-xs font-bold text-gray-400 mb-2">
+						AI Personality:
+					</p>
+					<div className="flex flex-wrap gap-1.5 mb-2">
+						{PRESETS.map((p) => (
+							<button
+								key={p.label}
+								onClick={() => {
+									setSysPrompt(p.prompt);
+									setMessages([]);
+								}}
+								className={
+									"px-2 py-1 rounded-md text-xs transition " +
+									(sysPrompt === p.prompt
+										? "bg-blue-600 text-white"
+										: "bg-gray-800 text-gray-400 hover:bg-gray-700")
+								}>
+								{p.label}
+							</button>
+						))}
+					</div>
+					<textarea
+						value={sysPrompt}
+						onChange={(e) => setSysPrompt(e.target.value)}
+						rows={2}
+						className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-300 outline-none resize-none"
+					/>
+				</div>
+			)}
 
 			{/* Messages */}
 			<div className="flex-1 overflow-y-auto px-4 py-6">
@@ -47,8 +104,9 @@ export default function Home() {
 						<div className="text-center py-20">
 							<p className="text-4xl mb-4">👋</p>
 							<h2 className="text-xl font-bold mb-2">Welcome!</h2>
-							<p className="text-gray-500">
-								Type a message below to start chatting with AI.
+							<p className="text-gray-500 text-sm mb-4">
+								Ask me anything. Change my personality in ⚙️
+								settings.
 							</p>
 						</div>
 					)}
@@ -69,6 +127,11 @@ export default function Home() {
 							</div>
 						</div>
 					))}
+					{error && (
+						<div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-xs">
+							⚠️ {error.message}
+						</div>
+					)}
 					<div ref={endRef} />
 				</div>
 			</div>
@@ -76,7 +139,9 @@ export default function Home() {
 			{/* Input Area */}
 			<div className="border-t border-gray-800 px-4 py-4">
 				<div className="max-w-3xl mx-auto flex gap-3">
-					<form onSubmit={onSend}>
+					<form
+						className="max-w-3xl mx-auto flex gap-3"
+						onSubmit={onSend}>
 						<input
 							value={input}
 							onChange={(e) => setInput(e.target.value)}
