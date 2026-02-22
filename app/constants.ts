@@ -1,3 +1,5 @@
+import { ModelOption, Provider } from "./types";
+
 export const PRESETS = [
 	{ label: "💬 General", prompt: "You are a helpful, concise AI assistant." },
 	{
@@ -25,3 +27,48 @@ export const starters = [
   { icon: "📝", text: "Review my code for best practices" },
   { icon: "🎯", text: "Give me 5 TypeScript interview questions" },
 ];
+
+export const MODELS: ModelOption[] = [
+	{
+		value: "gpt-4o-mini",
+		label: "GPT-4o Mini",
+		provider: "openai",
+		description: "Fast & affordable",
+	},
+	{
+		value: "gpt-5",
+		label: "GPT-5",
+		provider: "openai",
+		description: "Most capable",
+	},
+	{
+		value: "llama3.2",
+		label: "Llama 3.2",
+		provider: "ollama",
+		description: "Local · Meta",
+	},
+	{
+		value: "mistral",
+		label: "Mistral",
+		provider: "ollama",
+		description: "Local · Mistral AI",
+	},
+	{
+		value: "gemma3",
+		label: "Gemma 3",
+		provider: "ollama",
+		description: "Local · Google",
+	},
+];
+
+export 
+const PROVIDER_BADGE: Record<Provider, { label: string; className: string }> = {
+	openai: {
+		label: "Cloud",
+		className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+	},
+	ollama: {
+		label: "Local",
+		className: "bg-violet-500/15 text-violet-400 border-violet-500/20",
+	},
+};
