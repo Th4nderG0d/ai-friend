@@ -15,6 +15,7 @@ import {
 	useChatHandler,
 } from "./hooks/useChatHandler";
 import { ModelOption, Starter, Preset, ChatMessage, ChatConfig } from "./types";
+import { createGateway } from "ai";
 
 /* ── Helpers ────────────────────────────────────────────────── */
 
@@ -116,22 +117,6 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 	);
 }
 
-function TypingIndicator() {
-	return (
-		<div className="flex justify-start">
-			<div className="w-7 h-7 rounded-full bg-linear-to-br from-violet-600 to-blue-500 flex items-center justify-center text-[11px] mr-2.5 mt-1 shrink-0 shadow-lg shadow-violet-500/20">
-				AI
-			</div>
-			<div className="bg-gray-800/80 border border-gray-700/50 rounded-2xl px-4 py-3 shadow-lg shadow-black/20">
-				<div className="flex gap-1.5 items-center h-5">
-					<span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce [animation-delay:0ms]" />
-					<span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce [animation-delay:150ms]" />
-					<span className="w-2 h-2 rounded-full bg-gray-500 animate-bounce [animation-delay:300ms]" />
-				</div>
-			</div>
-		</div>
-	);
-}
 
 function StarterChips({
 	starters,
@@ -212,6 +197,9 @@ function SettingsPanel({
 /* ── Main Component ────────────────────────────────────────── */
 
 export default function Home(): JSX.Element {
+	const gateway = createGateway({
+		apiKey: process.env.NEXT_PUBLIC_AI_GATEWAY_API_KEY,
+	});
 	const [sysPrompt, setSysPrompt] = useState<string>(
 		(PRESETS as Preset[])[0].prompt
 	);
@@ -224,6 +212,14 @@ export default function Home(): JSX.Element {
 	const selected: ModelOption = findModel(modelKey);
 	const badge = PROVIDER_BADGE[selected.provider];
 
+
+	const fetchCreditDetails = async () => {
+		const credits = await gateway.getCredits();
+
+		console.log(`Team balance: ${credits.balance} credits`);
+		console.log(`Team total used: ${credits.totalUsed} credits`);
+	}
+
 	/* ── Config ref for the custom hook ──────────────────────── */
 
 	const configRef = useRef<ChatConfig>({
@@ -233,6 +229,7 @@ export default function Home(): JSX.Element {
 	});
 
 	useEffect(() => {
+		fetchCreditDetails();
 		configRef.current = {
 			system: sysPrompt,
 			model: selected.value,
@@ -436,7 +433,6 @@ export default function Home(): JSX.Element {
 							{messages.map((msg: ChatMessage) => (
 								<MessageBubble key={msg.id} message={msg} />
 							))}
-							{showTyping && <TypingIndicator />}
 						</div>
 					)}
 					{error && (
